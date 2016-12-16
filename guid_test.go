@@ -9,7 +9,7 @@ func Test_DefaultIsVersion4(t *testing.T) {
 	}
 }
 
-func Test_EmptyIsAllZero(t *testing.T) {
+func Test_Empty_IsAllZero(t *testing.T) {
 	subject := Empty()
 	expected := "00000000-0000-0000-0000-000000000000"
 	if actual := subject.String(); expected != actual {
@@ -41,7 +41,28 @@ func Test_Format_Empty(t *testing.T) {
 	}
 }
 
-func Test_version4ReservedBits(t *testing.T) {
+func Test_Parse_Roundtrip(t *testing.T) {
+	subject := NewGUID()
+
+	for format := range knownFormats {
+		serialized, formatErr := subject.Format(format)
+		if nil != formatErr {
+			t.Error(formatErr)
+		}
+
+		parsed, parseErr := Parse(serialized)
+		if nil != parseErr {
+			t.Error(parseErr)
+		}
+
+		if parsed != subject {
+			t.Logf("Expected: %s Actual: %s", subject.String(), parsed.String())
+			t.Fail()
+		}
+	}
+}
+
+func Test_version4_ReservedBits(t *testing.T) {
 	for i := 0; i < 500; i++ {
 		result, _ := version4()
 		if result.clockSeqHighAndReserved&0xc0 != 0x80 {
@@ -50,7 +71,7 @@ func Test_version4ReservedBits(t *testing.T) {
 	}
 }
 
-func Test_NoOctetisReliablyZero_Default(t *testing.T) {
+func Test__version4_NoOctetisReliablyZero(t *testing.T) {
 	results := make(map[string]uint)
 
 	iterations := uint(500)
@@ -64,7 +85,7 @@ func Test_NoOctetisReliablyZero_Default(t *testing.T) {
 	results["node"] = 0
 
 	for i := uint(0); i < iterations; i++ {
-		current := NewGUID()
+		current, _ := version4()
 		if 0 == current.timeLow {
 			results["time_low"]++
 		}
@@ -89,13 +110,13 @@ func Test_NoOctetisReliablyZero_Default(t *testing.T) {
 	}
 }
 
-func Test_SubsequentCallsDiffer_Default(t *testing.T) {
+func Test_version4_SubsequentCallsDiffer(t *testing.T) {
 	seen := make(map[GUID]struct{})
 	for i := 0; i < 500; i++ {
 		if i != len(seen) {
 			t.Fail()
 		}
-		result := NewGUID()
+		result, _ := version4()
 		if _, present := seen[result]; present == true {
 			t.Errorf("The value %s was generated multiple times.", result)
 			break

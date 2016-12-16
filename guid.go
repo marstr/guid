@@ -35,7 +35,7 @@ func Empty() GUID {
 	return emptyGUID
 }
 
-var defaultFormat string = "D"
+var defaultFormat = "D"
 var knownFormats = map[string]string{
 	"N": "%08x%04x%04x%02x%02x%02x%02x%02x%02x%02x%02x",
 	"D": "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
@@ -63,8 +63,8 @@ func Parse(value string) (GUID, error) {
 			&guid.node[3],
 			&guid.node[4],
 			&guid.node[5])
-		if !(parity == 11 && err == nil) {
-			return emptyGUID, err
+		if parity == 11 && err == nil {
+			return guid, err
 		}
 	}
 	return emptyGUID, fmt.Errorf("\"%s\" is not in a recognized format", value)
