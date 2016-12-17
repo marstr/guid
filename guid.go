@@ -7,7 +7,7 @@ import (
 )
 
 // GUID is a unique identifier designed to virtually guarantee non-conflict between values generated
-// across a distributed system. This allows for values that are
+// across a distributed system.
 type GUID struct {
 	timeHighAndVersion      uint16
 	timeMid                 uint16
@@ -35,13 +35,22 @@ func Empty() GUID {
 	return emptyGUID
 }
 
-var defaultFormat = "D"
+// These constants define the possible string formats available via this implementation of Guid.
+const (
+	FormatB       string = "B"
+	FormatD       string = "D"
+	FormatN       string = "N"
+	FormatP       string = "P"
+	FormatX       string = "X"
+	FormatDefault string = FormatD
+)
+
 var knownFormats = map[string]string{
-	"N": "%08x%04x%04x%02x%02x%02x%02x%02x%02x%02x%02x",
-	"D": "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-	"B": "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-	"P": "(%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x)",
-	"X": "{0x%08x,0x%04x,0x%04x,{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}}",
+	FormatN: "%08x%04x%04x%02x%02x%02x%02x%02x%02x%02x%02x",
+	FormatD: "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+	FormatB: "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+	FormatP: "(%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x)",
+	FormatX: "{0x%08x,0x%04x,0x%04x,{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}}",
 }
 
 // Parse instantiates a GUID from a text represention of the same GUID.
@@ -71,14 +80,14 @@ func Parse(value string) (GUID, error) {
 }
 
 func (guid *GUID) String() string {
-	result, _ := guid.Format(defaultFormat)
+	result, _ := guid.Format(FormatDefault)
 	return result
 }
 
 // Format returns a text representation of a GUID that conforms to the specified format.
 func (guid *GUID) Format(format string) (string, error) {
 	if format == "" {
-		format = defaultFormat
+		format = FormatDefault
 	}
 	fullFormat, present := knownFormats[format]
 	if !present {
