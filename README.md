@@ -27,11 +27,14 @@ minor/major updates should replace the previous version. If one desires to see
 the release notes for an older version, checkout that version of code and open
 this file.
 
-# Release Notes 0.1.*
-## 0.1.1
-For this release, basic functionality (instantiate, parse, and format) have
-been added. The only means of generating Guids is "version4" from RFC4122. Less
-formally, this is the version that generates a random GUID, with only 6 bits
-that are not random.
+# Release Notes 0.2.*
+## 0.2.0
+A few name changes were made, as well as setting up some mechanisms to more
+easily add GUID generators in the future.
+- The method `GUID.Format()` has been renamed to `GUID.Stringf()`.
+- `const` block was added to define available formatting strings for Stringf
+  and Parse
+- New constructor `NewGUIDs(CreationStrategy)` was added to allow requests for
+  different generation tactics.
 
 

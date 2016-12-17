@@ -1,6 +1,7 @@
 package guid
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -17,6 +18,31 @@ type GUID struct {
 	node                    [6]byte
 }
 
+// Format enumerates the values that are supported by Parse and Format
+type Format string
+
+// These constants define the possible string formats available via this implementation of Guid.
+const (
+	FormatB       Format = "B"
+	FormatD       Format = "D"
+	FormatN       Format = "N"
+	FormatP       Format = "P"
+	FormatX       Format = "X"
+	FormatDefault Format = FormatD
+)
+
+// CreationStrategy enumerates the values that are supported for populating the bits of a new Guid.
+type CreationStrategy string
+
+// These constants define the possible creation strategies available via this implementation of Guid.
+const (
+	CreationStrategyRFC4122Version1 CreationStrategy = "version1"
+	CreationStrategyRFC4122Version2 CreationStrategy = "version2"
+	CreationStrategyRFC4122Version3 CreationStrategy = "version3"
+	CreationStrategyRFC4122Version4 CreationStrategy = "version4"
+	CreationStrategyRFC4122Version5 CreationStrategy = "version5"
+)
+
 var (
 	emptyGUID GUID
 )
@@ -30,22 +56,25 @@ func NewGUID() GUID {
 	return result
 }
 
+var knownStrategies = map[CreationStrategy]func() (GUID, error){
+	CreationStrategyRFC4122Version4: version4,
+}
+
+// NewGUIDs generates and returns a new globally unique identifier that conforms to the given strategy.
+func NewGUIDs(strategy CreationStrategy) (GUID, error) {
+	if creator, present := knownStrategies[strategy]; present {
+		result, err := creator()
+		return result, err
+	}
+	return emptyGUID, errors.New("Unsupported CreationStrategy")
+}
+
 // Empty returns a copy of the default and empty GUID.
 func Empty() GUID {
 	return emptyGUID
 }
 
-// These constants define the possible string formats available via this implementation of Guid.
-const (
-	FormatB       string = "B"
-	FormatD       string = "D"
-	FormatN       string = "N"
-	FormatP       string = "P"
-	FormatX       string = "X"
-	FormatDefault string = FormatD
-)
-
-var knownFormats = map[string]string{
+var knownFormats = map[Format]string{
 	FormatN: "%08x%04x%04x%02x%02x%02x%02x%02x%02x%02x%02x",
 	FormatD: "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 	FormatB: "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
@@ -54,7 +83,7 @@ var knownFormats = map[string]string{
 }
 
 // Parse instantiates a GUID from a text represention of the same GUID.
-// This is the inverse function of String()
+// This is the inverse of function family String()
 func Parse(value string) (GUID, error) {
 	var guid GUID
 	for _, fullFormat := range knownFormats {
@@ -80,12 +109,12 @@ func Parse(value string) (GUID, error) {
 }
 
 func (guid *GUID) String() string {
-	result, _ := guid.Format(FormatDefault)
+	result, _ := guid.Stringf(FormatDefault)
 	return result
 }
 
-// Format returns a text representation of a GUID that conforms to the specified format.
-func (guid *GUID) Format(format string) (string, error) {
+// Stringf returns a text representation of a GUID that conforms to the specified format.
+func (guid *GUID) Stringf(format Format) (string, error) {
 	if format == "" {
 		format = FormatDefault
 	}

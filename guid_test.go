@@ -17,21 +17,42 @@ func Test_Empty_IsAllZero(t *testing.T) {
 	}
 }
 
+func Test_NewGUIDs_NotEmpty(t *testing.T) {
+	subject, err := NewGUIDs(CreationStrategyRFC4122Version4)
+	if err != nil {
+		t.Error(err)
+	}
+	if subject == Empty() {
+		t.Error()
+	}
+}
+
+func Test_NewGUIDs_Unsupported(t *testing.T) {
+	fauxStrategy := CreationStrategy("invalidStrategy")
+	subject, err := NewGUIDs(fauxStrategy)
+	if subject != Empty() {
+		t.Fail()
+	}
+	if err.Error() != "Unsupported CreationStrategy" {
+		t.Fail()
+	}
+}
+
 func Test_Format_Empty(t *testing.T) {
 	subject := Empty()
 	testCases := []struct {
-		shortFormat string
+		shortFormat Format
 		expected    string
 	}{
-		{"P", "(00000000-0000-0000-0000-000000000000)"},
-		{"X", "{0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}"},
-		{"N", "00000000000000000000000000000000"},
-		{"D", "00000000-0000-0000-0000-000000000000"},
-		{"B", "{00000000-0000-0000-0000-000000000000}"},
+		{FormatP, "(00000000-0000-0000-0000-000000000000)"},
+		{FormatX, "{0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}"},
+		{FormatN, "00000000000000000000000000000000"},
+		{FormatD, "00000000-0000-0000-0000-000000000000"},
+		{FormatB, "{00000000-0000-0000-0000-000000000000}"},
 	}
 
 	for _, scenario := range testCases {
-		result, err := subject.Format(scenario.shortFormat)
+		result, err := subject.Stringf(scenario.shortFormat)
 		if nil != err {
 			t.Error(err)
 		}
@@ -45,7 +66,7 @@ func Test_Parse_Roundtrip(t *testing.T) {
 	subject := NewGUID()
 
 	for format := range knownFormats {
-		serialized, formatErr := subject.Format(format)
+		serialized, formatErr := subject.Stringf(format)
 		if nil != formatErr {
 			t.Error(formatErr)
 		}
