@@ -28,6 +28,8 @@ the release notes for an older version, checkout that version of code and open
 this file.
 
 # Release Notes 0.2.*
+## 0.2.1
+Added an implementation of RFC4122 version1 UUID generation. It is now a supported CreationStrategy.
 ## 0.2.0
 A few name changes were made, as well as setting up some mechanisms to more
 easily add GUID generators in the future.
