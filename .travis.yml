@@ -1,0 +1,14 @@
+sudo: false
+
+language: go
+
+go: 1.7
+
+install:
+    - go get -u github.com/golang/lint/golint
+    - go get -u github.com/HewlettPackard/gas
+
+script:
+    - golint --set_exit_status
+    - go test
+    - gas ./...
