@@ -1,9 +1,9 @@
 package guid
 
 import (
+	"crypto/rand"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net"
 	"os"
 	"strings"
@@ -49,9 +49,7 @@ const (
 
 const localHost = "127.0.0.1"
 
-var (
-	emptyGUID GUID
-)
+var emptyGUID GUID
 
 // NewGUID generates and returns a new globally unique identifier
 func NewGUID() GUID {
@@ -116,8 +114,10 @@ func Parse(value string) (GUID, error) {
 }
 
 func (guid *GUID) String() string {
-	result, _ := guid.Stringf(FormatDefault)
-	return result
+	if result, err := guid.Stringf(FormatDefault); err == nil {
+		return result
+	}
+	return ""
 }
 
 // Stringf returns a text representation of a GUID that conforms to the specified format.
@@ -167,15 +167,19 @@ func getRFC4122Time() int64 {
 var clockSeqVal uint16
 var clockSeqKey sync.Mutex
 
-func getClockSequence() uint16 {
+func getClockSequence() (uint16, error) {
 	clockSeqKey.Lock()
 	defer clockSeqKey.Unlock()
 
 	if 0 == clockSeqVal {
-		clockSeqVal = uint16(rand.Uint32())
+		var temp [2]byte
+		if parity, err := rand.Read(temp[:]); !(2 == parity && nil == err) {
+			return 0, err
+		}
+		clockSeqVal = uint16(temp[0])<<8 | uint16(temp[1])
 	}
 	clockSeqVal++
-	return clockSeqVal
+	return clockSeqVal, nil
 }
 
 func getMACAddress() ([6]byte, error) {
@@ -214,6 +218,7 @@ func version1() (GUID, error) {
 	var retval GUID
 	var localMAC [6]byte
 	var err error
+	var clockSeq uint16
 
 	currentTime := getRFC4122Time()
 
@@ -229,7 +234,9 @@ func version1() (GUID, error) {
 	}
 	copy(retval.node[:], localMAC[:])
 
-	clockSeq := getClockSequence()
+	if clockSeq, err = getClockSequence(); nil != err {
+		return emptyGUID, err
+	}
 
 	retval.clockSeqLow = uint8(clockSeq)
 	retval.clockSeqHighAndReserved = uint8(clockSeq >> 8)
@@ -241,17 +248,16 @@ func version1() (GUID, error) {
 
 func version4() (GUID, error) {
 	var retval GUID
-	var bits uint32
+	var bits [10]byte
 
-	// Randomly set all time components and version
-	bits = rand.Uint32()
-	retval.timeHighAndVersion |= uint16(bits >> 16)
-	retval.timeMid |= uint16(bits)
-	bits = rand.Uint32()
-	retval.timeLow = bits
-	bits = rand.Uint32()
-	retval.clockSeqHighAndReserved = uint8(bits)
-	retval.clockSeqLow = uint8(bits >> 8)
+	if parity, err := rand.Read(bits[:]); !(len(bits) == parity && err == nil) {
+		return emptyGUID, err
+	}
+	retval.timeHighAndVersion |= uint16(bits[0]) | uint16(bits[1])<<8
+	retval.timeMid |= uint16(bits[2]) | uint16(bits[3])<<8
+	retval.timeLow |= uint32(bits[4]) | uint32(bits[5])<<8 | uint32(bits[6])<<16 | uint32(bits[7])<<24
+	retval.clockSeqHighAndReserved = uint8(bits[8])
+	retval.clockSeqLow = uint8(bits[9])
 
 	//Randomly set clock-sequence, reserved, and node
 	if written, err := rand.Read(retval.node[:]); !(nil == err && written == len(retval.node)) {
