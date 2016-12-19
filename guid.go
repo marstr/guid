@@ -4,7 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"os"
+	"strings"
+	"sync"
+	"time"
 )
 
 // GUID is a unique identifier designed to virtually guarantee non-conflict between values generated
@@ -43,6 +47,8 @@ const (
 	CreationStrategyRFC4122Version5 CreationStrategy = "version5"
 )
 
+const localHost = "127.0.0.1"
+
 var (
 	emptyGUID GUID
 )
@@ -57,6 +63,7 @@ func NewGUID() GUID {
 }
 
 var knownStrategies = map[CreationStrategy]func() (GUID, error){
+	CreationStrategyRFC4122Version1: version1,
 	CreationStrategyRFC4122Version4: version4,
 }
 
@@ -148,8 +155,87 @@ const (
 	creationStateFilePath string      = "foo.lock"
 )
 
+var unixToGregorianOffset = time.Date(1970, 01, 01, 0, 0, 00, 0, time.UTC).Sub(time.Date(1582, 10, 15, 0, 0, 0, 0, time.UTC))
+
+// getRFC4122Time returns a 60-bit count of 100-nanosecond intervals since 00:00:00.00 October 15th, 1582
+func getRFC4122Time() int64 {
+	currentTime := time.Now().UTC().Add(unixToGregorianOffset).UnixNano()
+	currentTime /= 100
+	return currentTime & 0x0FFFFFFFFFFFFFFF
+}
+
+var clockSeqVal uint16
+var clockSeqKey sync.Mutex
+
+func getClockSequence() uint16 {
+	clockSeqKey.Lock()
+	defer clockSeqKey.Unlock()
+
+	if 0 == clockSeqVal {
+		clockSeqVal = uint16(rand.Uint32())
+	}
+	clockSeqVal++
+	return clockSeqVal
+}
+
+func getMACAddress() ([6]byte, error) {
+	var retval [6]byte
+	var err error
+	var hostNICs []net.Interface
+
+	hostNICs, err = net.Interfaces()
+	if nil == err {
+		found := false
+		for _, nic := range hostNICs {
+			var parity int
+
+			parity, err = fmt.Sscanf(
+				strings.ToLower(nic.HardwareAddr.String()),
+				"%02x:%02x:%02x:%02x:%02x:%02x",
+				&retval[0],
+				&retval[1],
+				&retval[2],
+				&retval[3],
+				&retval[4],
+				&retval[5])
+			if parity == len(retval) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			err = fmt.Errorf("No suitable address found")
+		}
+	}
+	return retval, err
+}
+
 func version1() (GUID, error) {
 	var retval GUID
+	var localMAC [6]byte
+	var err error
+
+	currentTime := getRFC4122Time()
+
+	retval.timeLow = uint32(currentTime)
+	retval.timeMid = uint16(currentTime >> 32)
+	retval.timeHighAndVersion = uint16(currentTime >> 48)
+	if err = retval.setVersion(1); err != nil {
+		return emptyGUID, err
+	}
+
+	if localMAC, err = getMACAddress(); nil != err {
+		return emptyGUID, err
+	}
+	copy(retval.node[:], localMAC[:])
+
+	clockSeq := getClockSequence()
+
+	retval.clockSeqLow = uint8(clockSeq)
+	retval.clockSeqHighAndReserved = uint8(clockSeq >> 8)
+
+	retval.setReservedBits()
+
 	return retval, nil
 }
 
@@ -176,7 +262,7 @@ func version4() (GUID, error) {
 	if err := retval.setVersion(4); nil != err {
 		return emptyGUID, err
 	}
-	retval.clockSeqHighAndReserved = (retval.clockSeqHighAndReserved & 0x3f) | 0x80
+	retval.setReservedBits()
 
 	return retval, nil
 }
@@ -187,4 +273,8 @@ func (guid *GUID) setVersion(version uint16) error {
 	}
 	guid.timeHighAndVersion = (guid.timeHighAndVersion & 0x0fff) | version<<12
 	return nil
+}
+
+func (guid *GUID) setReservedBits() {
+	guid.clockSeqHighAndReserved = (guid.clockSeqHighAndReserved & 0x3f) | 0x80
 }

@@ -57,7 +57,8 @@ func Test_Format_Empty(t *testing.T) {
 			t.Error(err)
 		}
 		if result != scenario.expected {
-			t.Errorf("\nExpected: %s\nActual:  %s", scenario.expected, result)
+			t.Logf("\nExpected: %s\nActual:  %s", scenario.expected, result)
+			t.Fail()
 		}
 	}
 }
@@ -124,30 +125,76 @@ func Test__version4_NoOctetisReliablyZero(t *testing.T) {
 		}
 	}
 
+	anySuspicious := false
 	for key, val := range results {
 		if val > suspicionThreshold {
-			t.Errorf("%s reported value 0 enough times (%d of %d) to be suspicious.", key, val, iterations)
+			anySuspicious = true
+			t.Logf("%s reported value 0 enough times (%d of %d) to be suspicious.", key, val, iterations)
 		}
+	}
+	if anySuspicious {
+		t.Fail()
 	}
 }
 
 func Test_version4_SubsequentCallsDiffer(t *testing.T) {
 	seen := make(map[GUID]struct{})
 	for i := 0; i < 500; i++ {
-		if i != len(seen) {
-			t.Fail()
-		}
 		result, _ := version4()
 		if _, present := seen[result]; present == true {
-			t.Errorf("The value %s was generated multiple times.", result)
-			break
+			t.Logf("The value %s was generated multiple times.", result)
+			t.Fail()
 		}
 		seen[result] = struct{}{}
+	}
+}
+
+func Test_version1_SubsequentCallsDiffer(t *testing.T) {
+	seen := make(map[GUID]struct{})
+	for i := 0; i < 500; i++ {
+		result, _ := version1()
+		if _, present := seen[result]; present == true {
+			t.Logf("The value %s was generated multiple times.", result)
+			t.FailNow()
+		}
+		seen[result] = struct{}{}
+	}
+}
+
+func Test_getMACAddress(t *testing.T) {
+	subject, err := getMACAddress()
+	t.Logf("MAC returned: %02x:%02x:%02x:%02x:%02x:%02x", subject[0], subject[1], subject[2], subject[3], subject[4], subject[5])
+
+	if nil != err {
+		t.Error(err)
+	}
+
+	nonZeroSeen := false
+	for _, octet := range subject {
+		if 0 != octet {
+			nonZeroSeen = true
+			break
+		}
+	}
+	if !nonZeroSeen {
+		t.Fail()
 	}
 }
 
 func Benchmark_NewGUID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		NewGUID()
+	}
+}
+
+func Benchmark_version1(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		version1()
+	}
+}
+
+func Benchmark_version4(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		version4()
 	}
 }
