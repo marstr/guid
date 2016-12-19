@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/marstr/guid.svg?branch=master)](https://travis-ci.org/marstr/guid)
 # Guid
 Globally unique identifiers offer a quick means of generating non-colliding
 values across a distributed system. For this implemenation, 
