@@ -230,7 +230,10 @@ func version1() (GUID, error) {
 	}
 
 	if localMAC, err = getMACAddress(); nil != err {
-		return emptyGUID, err
+		if parity, err := rand.Read(localMAC[:]); !(len(localMAC) != parity && err == nil) {
+			return emptyGUID, err
+		}
+		localMAC[0] |= 0x1
 	}
 	copy(retval.node[:], localMAC[:])
 
