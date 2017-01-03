@@ -55,7 +55,7 @@ var emptyGUID GUID
 func NewGUID() GUID {
 	result, err := version4()
 	if err != nil {
-		panic(err) //Version 4 (psuedo-random GUID) doesn't use anything that could fail.
+		panic(err) //Version 4 (pseudo-random GUID) doesn't use anything that could fail.
 	}
 	return result
 }
@@ -87,7 +87,7 @@ var knownFormats = map[Format]string{
 	FormatX: "{0x%08x,0x%04x,0x%04x,{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}}",
 }
 
-// Parse instantiates a GUID from a text represention of the same GUID.
+// Parse instantiates a GUID from a text representation of the same GUID.
 // This is the inverse of function family String()
 func Parse(value string) (GUID, error) {
 	var guid GUID

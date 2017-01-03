@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/marstr/guid.svg?branch=master)](https://travis-ci.org/marstr/guid) [![GoDoc](https://godoc.org/github.com/marstr/guid?status.svg)](https://godoc.org/github.com/marstr/guid)
+[![Build Status](https://travis-ci.org/marstr/guid.svg?branch=master)](https://travis-ci.org/marstr/guid) [![GoDoc](https://godoc.org/github.com/marstr/guid?status.svg)](https://godoc.org/github.com/marstr/guid) [![Go Report Card](https://goreportcard.com/badge/github.com/marstr/guid)](https://goreportcard.com/report/github.com/marstr/guid)
 # Guid
 Globally unique identifiers offer a quick means of generating non-colliding
 values across a distributed system. For this implemenation, 

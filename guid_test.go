@@ -142,7 +142,7 @@ func Test_version4_SubsequentCallsDiffer(t *testing.T) {
 	for i := 0; i < 500; i++ {
 		result, _ := version4()
 		if _, present := seen[result]; present == true {
-			t.Logf("The value %s was generated multiple times.", result)
+			t.Logf("The value %s was generated multiple times.", result.String())
 			t.Fail()
 		}
 		seen[result] = struct{}{}
@@ -154,7 +154,7 @@ func Test_version1_SubsequentCallsDiffer(t *testing.T) {
 	for i := 0; i < 500; i++ {
 		result, _ := version1()
 		if _, present := seen[result]; present == true {
-			t.Logf("The value %s was generated multiple times.", result)
+			t.Logf("The value %s was generated multiple times.", result.String())
 			t.FailNow()
 		}
 		seen[result] = struct{}{}
