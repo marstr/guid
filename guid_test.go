@@ -181,6 +181,21 @@ func Test_getMACAddress(t *testing.T) {
 	}
 }
 
+func Test_setVersion_bounds(t *testing.T) {
+	var fodder GUID
+	err := fodder.setVersion(0)
+	if nil == err {
+		t.Log("error expected but unfound when version set to 0")
+		t.Fail()
+	}
+
+	err = fodder.setVersion(6)
+	if nil == err {
+		t.Log("error expected but unfound when version set to 6")
+		t.Fail()
+	}
+}
+
 func Benchmark_NewGUID(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		NewGUID()

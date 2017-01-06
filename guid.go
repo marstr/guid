@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -46,8 +45,6 @@ const (
 	CreationStrategyRFC4122Version4 CreationStrategy = "version4"
 	CreationStrategyRFC4122Version5 CreationStrategy = "version5"
 )
-
-const localHost = "127.0.0.1"
 
 var emptyGUID GUID
 
@@ -113,6 +110,7 @@ func Parse(value string) (GUID, error) {
 	return emptyGUID, fmt.Errorf("\"%s\" is not in a recognized format", value)
 }
 
+// String returns a text representation of a GUID in the default format.
 func (guid *GUID) String() string {
 	if result, err := guid.Stringf(FormatDefault); err == nil {
 		return result
@@ -149,11 +147,6 @@ func (guid *GUID) Stringf(format Format) (string, error) {
 func (guid *GUID) Version() uint {
 	return uint(guid.timeHighAndVersion >> 12)
 }
-
-const (
-	creationFileMode      os.FileMode = os.ModeExclusive
-	creationStateFilePath string      = "foo.lock"
-)
 
 var unixToGregorianOffset = time.Date(1970, 01, 01, 0, 0, 00, 0, time.UTC).Sub(time.Date(1582, 10, 15, 0, 0, 0, 0, time.UTC))
 
@@ -277,7 +270,7 @@ func version4() (GUID, error) {
 }
 
 func (guid *GUID) setVersion(version uint16) error {
-	if version > 5 {
+	if version > 5 || version == 0 {
 		return fmt.Errorf("While setting GUID version, unsupported version: %d", version)
 	}
 	guid.timeHighAndVersion = (guid.timeHighAndVersion & 0x0fff) | version<<12
