@@ -36,9 +36,11 @@ this file.
  used. The random MAC conforms to the MAC spec, which sets a bit when the 
  address is unknown.
 - Bug fixes.
+
 ## 0.2.1
 Added an implementation of RFC4122 version1 UUID generation. It is now a
 supported CreationStrategy.
+
 ## 0.2.0
 A few name changes were made, as well as setting up some mechanisms to more
 easily add GUID generators in the future.
