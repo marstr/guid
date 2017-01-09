@@ -18,7 +18,7 @@ func Test_Empty_IsAllZero(t *testing.T) {
 }
 
 func Test_NewGUIDs_NotEmpty(t *testing.T) {
-	subject, err := NewGUIDs(CreationStrategyRFC4122Version4)
+	subject, err := NewGUIDs(CreationStrategyVersion4)
 	if err != nil {
 		t.Error(err)
 	}

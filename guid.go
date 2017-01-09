@@ -26,11 +26,11 @@ type Format string
 
 // These constants define the possible string formats available via this implementation of Guid.
 const (
-	FormatB       Format = "B"
-	FormatD       Format = "D"
-	FormatN       Format = "N"
-	FormatP       Format = "P"
-	FormatX       Format = "X"
+	FormatB       Format = "B" // {00000000-0000-0000-0000-000000000000}
+	FormatD       Format = "D" // 00000000-0000-0000-0000-000000000000
+	FormatN       Format = "N" // 00000000000000000000000000000000
+	FormatP       Format = "P" // (00000000-0000-0000-0000-000000000000)
+	FormatX       Format = "X" // {0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}
 	FormatDefault Format = FormatD
 )
 
@@ -39,11 +39,11 @@ type CreationStrategy string
 
 // These constants define the possible creation strategies available via this implementation of Guid.
 const (
-	CreationStrategyRFC4122Version1 CreationStrategy = "version1"
-	CreationStrategyRFC4122Version2 CreationStrategy = "version2"
-	CreationStrategyRFC4122Version3 CreationStrategy = "version3"
-	CreationStrategyRFC4122Version4 CreationStrategy = "version4"
-	CreationStrategyRFC4122Version5 CreationStrategy = "version5"
+	CreationStrategyVersion1 CreationStrategy = "version1"
+	CreationStrategyVersion2 CreationStrategy = "version2"
+	CreationStrategyVersion3 CreationStrategy = "version3"
+	CreationStrategyVersion4 CreationStrategy = "version4"
+	CreationStrategyVersion5 CreationStrategy = "version5"
 )
 
 var emptyGUID GUID
@@ -58,8 +58,8 @@ func NewGUID() GUID {
 }
 
 var knownStrategies = map[CreationStrategy]func() (GUID, error){
-	CreationStrategyRFC4122Version1: version1,
-	CreationStrategyRFC4122Version4: version4,
+	CreationStrategyVersion1: version1,
+	CreationStrategyVersion4: version4,
 }
 
 // NewGUIDs generates and returns a new globally unique identifier that conforms to the given strategy.
