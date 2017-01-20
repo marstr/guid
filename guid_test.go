@@ -228,3 +228,13 @@ func ExampleGUID_String() {
 	fmt.Printf(Empty().String())
 	// Output: 00000000-0000-0000-0000-000000000000
 }
+
+func Example_Empty() {
+	var example GUID
+	if example == Empty() {
+		fmt.Print("Example is Empty")
+	} else {
+		fmt.Print("Example is not Empty")
+	}
+	// Output: Example is Empty
+}

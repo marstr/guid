@@ -142,7 +142,7 @@ func (guid GUID) Stringf(format Format) string {
 
 // Version reads a GUID to parse which mechanism of generating GUIDS was employed.
 // Values returned here are documented in rfc4122.txt.
-func (guid *GUID) Version() uint {
+func (guid GUID) Version() uint {
 	return uint(guid.timeHighAndVersion >> 12)
 }
 
