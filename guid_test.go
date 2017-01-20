@@ -12,14 +12,6 @@ func Test_DefaultIsVersion4(t *testing.T) {
 	}
 }
 
-func Test_Empty_IsAllZero(t *testing.T) {
-	subject := Empty()
-	expected := "00000000-0000-0000-0000-000000000000"
-	if actual := subject.String(); expected != actual {
-		t.Errorf("Empty value expected to be all zero.\nExpected: %s\n  Actual: %s", expected, actual)
-	}
-}
-
 func Test_NewGUIDs_NotEmpty(t *testing.T) {
 	subject, err := NewGUIDs(CreationStrategyVersion4)
 	if err != nil {
@@ -55,10 +47,7 @@ func Test_Format_Empty(t *testing.T) {
 	}
 
 	for _, scenario := range testCases {
-		result, err := subject.Stringf(scenario.shortFormat)
-		if nil != err {
-			t.Error(err)
-		}
+		result := subject.Stringf(scenario.shortFormat)
 		if result != scenario.expected {
 			t.Logf("\nExpected: %s\nActual:  %s", scenario.expected, result)
 			t.Fail()
@@ -70,10 +59,7 @@ func Test_Parse_Roundtrip(t *testing.T) {
 	subject := NewGUID()
 
 	for format := range knownFormats {
-		serialized, formatErr := subject.Stringf(format)
-		if nil != formatErr {
-			t.Error(formatErr)
-		}
+		serialized := subject.Stringf(format)
 
 		parsed, parseErr := Parse(serialized)
 		if nil != parseErr {
@@ -217,17 +203,28 @@ func Benchmark_version4(b *testing.B) {
 	}
 }
 
-func ExampleGUID_NewGUIDs() {
-	allRandom, err := NewGUIDs(CreationStrategyVersion4)
-	if err != nil {
-		panic(err)
+func Benchmark_String(b *testing.B) {
+	rand, _ := NewGUIDs(CreationStrategyVersion4)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rand.String()
 	}
-	fmt.Println(allRandom)
+}
+
+func Benchmark_Stringf(b *testing.B) {
+	rand, _ := NewGUIDs(CreationStrategyVersion4)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		rand.Stringf(FormatX)
+	}
 }
 
 func ExampleGUID_Stringf() {
-	target := Empty()
-	result, _ := target.Stringf(FormatB)
-	fmt.Printf(result)
+	fmt.Printf(Empty().Stringf(FormatB))
 	// Output: {00000000-0000-0000-0000-000000000000}
+}
+
+func ExampleGUID_String() {
+	fmt.Printf(Empty().String())
+	// Output: 00000000-0000-0000-0000-000000000000
 }

@@ -112,20 +112,18 @@ func Parse(value string) (GUID, error) {
 
 // String returns a text representation of a GUID in the default format.
 func (guid GUID) String() string {
-	if result, err := guid.Stringf(FormatDefault); err == nil {
-		return result
-	}
-	return ""
+	return guid.Stringf(FormatDefault)
 }
 
 // Stringf returns a text representation of a GUID that conforms to the specified format.
-func (guid GUID) Stringf(format Format) (string, error) {
+// If an unrecognized format is provided, the empty string is returned.
+func (guid GUID) Stringf(format Format) string {
 	if format == "" {
 		format = FormatDefault
 	}
 	fullFormat, present := knownFormats[format]
 	if !present {
-		return "", fmt.Errorf("%s is not a recognized format string. Please choose from", format)
+		return ""
 	}
 	return fmt.Sprintf(
 		fullFormat,
@@ -139,7 +137,7 @@ func (guid GUID) Stringf(format Format) (string, error) {
 		guid.node[2],
 		guid.node[3],
 		guid.node[4],
-		guid.node[5]), nil
+		guid.node[5])
 }
 
 // Version reads a GUID to parse which mechanism of generating GUIDS was employed.
