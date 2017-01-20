@@ -111,7 +111,7 @@ func Parse(value string) (GUID, error) {
 }
 
 // String returns a text representation of a GUID in the default format.
-func (guid *GUID) String() string {
+func (guid GUID) String() string {
 	if result, err := guid.Stringf(FormatDefault); err == nil {
 		return result
 	}
@@ -119,7 +119,7 @@ func (guid *GUID) String() string {
 }
 
 // Stringf returns a text representation of a GUID that conforms to the specified format.
-func (guid *GUID) Stringf(format Format) (string, error) {
+func (guid GUID) Stringf(format Format) (string, error) {
 	if format == "" {
 		format = FormatDefault
 	}

@@ -1,6 +1,9 @@
 package guid
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func Test_DefaultIsVersion4(t *testing.T) {
 	subject := NewGUID()
@@ -212,4 +215,19 @@ func Benchmark_version4(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		version4()
 	}
+}
+
+func ExampleGUID_NewGUIDs() {
+	allRandom, err := NewGUIDs(CreationStrategyVersion4)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(allRandom)
+}
+
+func ExampleGUID_Stringf() {
+	target := Empty()
+	result, _ := target.Stringf(FormatB)
+	fmt.Printf(result)
+	// Output: {00000000-0000-0000-0000-000000000000}
 }
