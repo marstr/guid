@@ -29,6 +29,8 @@ the release notes for an older version, checkout that version of code and open
 this file.
 
 # Release Notes 0.2.*
+## 0.2.3
+Updating String* functions to not be pointer functions. Also, adding a Stringf example.
 ## 0.2.2
 - Randomly generated bits now use the crypto/rand library to ensure safer
  randomly generated GUIDs.
