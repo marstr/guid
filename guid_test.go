@@ -221,6 +221,20 @@ func Benchmark_Stringf(b *testing.B) {
 	}
 }
 
+func Benchmark_Parse(b *testing.B) {
+	rand := NewGUID()
+	b.ResetTimer()
+
+	for format := range knownFormats {
+		printed := rand.Stringf(format)
+		b.Run(string(format), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				Parse(printed)
+			}
+		})
+	}
+}
+
 func ExampleGUID_Stringf() {
 	fmt.Printf(Empty().Stringf(FormatB))
 	// Output: {00000000-0000-0000-0000-000000000000}
