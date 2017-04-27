@@ -1,6 +1,7 @@
 package guid
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -178,6 +179,56 @@ func Test_SubsequentCallsDiffer(t *testing.T) {
 		})
 	}
 
+}
+
+func Test_JSONRoundTrip(t *testing.T) {
+	testCases := []GUID{
+		Empty(),
+		NewGUID(),
+	}
+
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			marshaled, err := json.Marshal(tc)
+			if err != nil {
+				t.Error(err)
+			}
+
+			var unmarshaled GUID
+			err = json.Unmarshal(marshaled, &unmarshaled)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if tc != unmarshaled {
+				t.Logf("\ngot: \t%s\nwant:\t%s", unmarshaled.String(), tc.String())
+				t.Fail()
+			}
+		})
+	}
+}
+
+func TestGUID_UnmarshalJSON_Failure(t *testing.T) {
+	testCases := []string{
+		``,
+		`"`,
+		`a`,
+	}
+
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			var unmarshaled GUID
+			err := json.Unmarshal([]byte(tc), &unmarshaled)
+			if err == nil {
+				t.Logf("\ngot: \t%v\nwant:\t%v", err, nil)
+				t.Fail()
+			}
+			if unmarshaled != Empty() {
+				t.Logf("\ngot: \t%s\nwant:\t%v", unmarshaled.String(), Empty().String())
+				t.Fail()
+			}
+		})
+	}
 }
 
 func Test_getMACAddress(t *testing.T) {

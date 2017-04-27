@@ -1,6 +1,7 @@
 package guid
 
 import (
+	"bytes"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -84,6 +85,18 @@ var knownFormats = map[Format]string{
 	FormatX: "{0x%08x,0x%04x,0x%04x,{0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x}}",
 }
 
+// MarshalJSON writes a GUID as a JSON string.
+func (guid GUID) MarshalJSON() (marshaled []byte, err error) {
+	buf := bytes.Buffer{}
+
+	_, err = buf.WriteRune('"')
+	buf.WriteString(guid.String())
+	buf.WriteRune('"')
+
+	marshaled = buf.Bytes()
+	return
+}
+
 // Parse instantiates a GUID from a text representation of the same GUID.
 // This is the inverse of function family String()
 func Parse(value string) (GUID, error) {
@@ -138,6 +151,17 @@ func (guid GUID) Stringf(format Format) string {
 		guid.node[3],
 		guid.node[4],
 		guid.node[5])
+}
+
+// UnmarshalJSON parses a GUID from a JSON string token.
+func (guid *GUID) UnmarshalJSON(marshaled []byte) (err error) {
+	if len(marshaled) < 2 {
+		err = errors.New("JSON GUID must be surrounded by quotes")
+		return
+	}
+	stripped := marshaled[1 : len(marshaled)-1]
+	*guid, err = Parse(string(stripped))
+	return
 }
 
 // Version reads a GUID to parse which mechanism of generating GUIDS was employed.
