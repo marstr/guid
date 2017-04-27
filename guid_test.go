@@ -2,6 +2,7 @@ package guid
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -209,22 +210,32 @@ func Test_JSONRoundTrip(t *testing.T) {
 }
 
 func TestGUID_UnmarshalJSON_Failure(t *testing.T) {
-	testCases := []string{
-		``,
-		`"`,
-		`a`,
+	invalidJSON := errors.New("unexpected end of JSON input")
+	notJSONString := errors.New("JSON GUID must be surrounded by quotes")
+
+	testCases := []struct {
+		string
+		error
+	}{
+		{``, invalidJSON},
+		{`"`, invalidJSON},
+		{`a`, errors.New("invalid character 'a' looking for beginning of value")},
+		{`3`, notJSONString},
+		{`""`, errors.New(`"" is not in a recognized format`)},
+		{`"ab"`, errors.New(`"ab" is not in a recognized format`)},
 	}
 
 	for _, tc := range testCases {
 		t.Run("", func(t *testing.T) {
 			var unmarshaled GUID
-			err := json.Unmarshal([]byte(tc), &unmarshaled)
-			if err == nil {
-				t.Logf("\ngot: \t%v\nwant:\t%v", err, nil)
+			err := json.Unmarshal([]byte(tc.string), &unmarshaled).Error()
+
+			if expected := tc.error.Error(); err != expected {
+				t.Logf("\ngot: \t%s\nwant:\t%s", err, expected)
 				t.Fail()
 			}
-			if unmarshaled != Empty() {
-				t.Logf("\ngot: \t%s\nwant:\t%v", unmarshaled.String(), Empty().String())
+			if expected := Empty(); unmarshaled != expected {
+				t.Logf("\ngot: \t%s\nwant:\t%s", unmarshaled.String(), expected.String())
 				t.Fail()
 			}
 		})
