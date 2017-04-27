@@ -84,6 +84,29 @@ func Test_Parse_Roundtrip(t *testing.T) {
 	}
 }
 
+func Test_Parse_Failures(t *testing.T) {
+	testCases := []string{
+		"",
+		"abc",
+		"00000000-0000-0000-0000-000000", // Missing digits
+	}
+
+	for _, tc := range testCases {
+		t.Run("", func(t *testing.T) {
+			result, err := Parse(tc)
+			if expected := fmt.Sprintf(`"%s" is not in a recognized format`, tc); nil == err || expected != err.Error() {
+				t.Logf("\nwant:\t%s\ngot: \t%v", expected, err)
+				t.Fail()
+			}
+
+			if result != Empty() {
+				t.Logf("\nwant:\t%s\ngot: \t%s", Empty().String(), result.String())
+				t.Fail()
+			}
+		})
+	}
+}
+
 func Test_version4_ReservedBits(t *testing.T) {
 	for i := 0; i < 500; i++ {
 		result, _ := version4()
@@ -93,7 +116,7 @@ func Test_version4_ReservedBits(t *testing.T) {
 	}
 }
 
-func Test__version4_NoOctetisReliablyZero(t *testing.T) {
+func Test_version4_NoOctetisReliablyZero(t *testing.T) {
 	results := make(map[string]uint)
 
 	const iterations uint = 500
