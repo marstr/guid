@@ -2,6 +2,7 @@ package guid
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 )
 
@@ -204,7 +205,7 @@ func Benchmark_String(b *testing.B) {
 	rand, _ := NewGUIDs(CreationStrategyVersion4)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		rand.String()
+		fmt.Fprint(ioutil.Discard, rand.String()) // This slows down the call, but lets `go vet` pass.
 	}
 }
 
@@ -245,7 +246,7 @@ func ExampleGUID_String() {
 	// Output: 00000000-0000-0000-0000-000000000000
 }
 
-func Example_Empty() {
+func ExampleEmpty() {
 	var example GUID
 	if example == Empty() {
 		fmt.Print("Example is Empty")
