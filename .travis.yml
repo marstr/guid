@@ -14,4 +14,5 @@ script:
     - golint --set_exit_status
     - go vet
     - go test -v -cover -race
+    - go test -bench .
     - gas ./...
