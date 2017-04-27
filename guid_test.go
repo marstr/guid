@@ -8,17 +8,23 @@ import (
 func Test_DefaultIsVersion4(t *testing.T) {
 	subject := NewGUID()
 	if ver := subject.Version(); ver != 4 {
-		t.Errorf("Default GUID should be produced algorithm: version 4. Actual: version %d\n%s", ver, subject.String())
+		t.Logf("Default GUID should be produced using algorithm: version 4. Actual: version %d\n%s", ver, subject.String())
+		t.Fail()
 	}
 }
 
 func Test_NewGUIDs_NotEmpty(t *testing.T) {
-	subject, err := NewGUIDs(CreationStrategyVersion4)
-	if err != nil {
-		t.Error(err)
-	}
-	if subject == Empty() {
-		t.Error()
+	for strat := range knownStrategies {
+		t.Run(string(strat), func(subT *testing.T) {
+			subject, err := NewGUIDs(strat)
+			if err != nil {
+				subT.Error(err)
+			}
+			if subject == Empty() {
+				subT.Logf("unexpected empty encountered")
+				subT.Fail()
+			}
+		})
 	}
 }
 
@@ -47,11 +53,13 @@ func Test_Format_Empty(t *testing.T) {
 	}
 
 	for _, scenario := range testCases {
-		result := subject.Stringf(scenario.shortFormat)
-		if result != scenario.expected {
-			t.Logf("\nExpected: %s\nActual:  %s", scenario.expected, result)
-			t.Fail()
-		}
+		t.Run("", func(subT *testing.T) {
+			result := subject.Stringf(scenario.shortFormat)
+			if result != scenario.expected {
+				subT.Logf("\nwant:\t%s\ngot: \t%s", scenario.expected, result)
+				subT.Fail()
+			}
+		})
 	}
 }
 
@@ -59,17 +67,19 @@ func Test_Parse_Roundtrip(t *testing.T) {
 	subject := NewGUID()
 
 	for format := range knownFormats {
-		serialized := subject.Stringf(format)
+		t.Run(string(format), func(subT *testing.T) {
+			serialized := subject.Stringf(format)
 
-		parsed, parseErr := Parse(serialized)
-		if nil != parseErr {
-			t.Error(parseErr)
-		}
+			parsed, parseErr := Parse(serialized)
+			if nil != parseErr {
+				subT.Error(parseErr)
+			}
 
-		if parsed != subject {
-			t.Logf("Expected: %s Actual: %s", subject.String(), parsed.String())
-			t.Fail()
-		}
+			if parsed != subject {
+				subT.Logf("\nwant:\t%s\ngot: \t%s", subject.String(), parsed.String())
+				subT.Fail()
+			}
+		})
 	}
 }
 
@@ -85,8 +95,8 @@ func Test_version4_ReservedBits(t *testing.T) {
 func Test__version4_NoOctetisReliablyZero(t *testing.T) {
 	results := make(map[string]uint)
 
-	iterations := uint(500)
-	suspicionThreshold := iterations / 10
+	const iterations uint = 500
+	const suspicionThreshold uint = iterations / 10
 
 	results["time_low"] = 0
 	results["time_mid"] = 0
@@ -126,28 +136,24 @@ func Test__version4_NoOctetisReliablyZero(t *testing.T) {
 	}
 }
 
-func Test_version4_SubsequentCallsDiffer(t *testing.T) {
-	seen := make(map[GUID]struct{})
-	for i := 0; i < 500; i++ {
-		result, _ := version4()
-		if _, present := seen[result]; present == true {
-			t.Logf("The value %s was generated multiple times.", result.String())
-			t.Fail()
-		}
-		seen[result] = struct{}{}
+func Test_SubsequentCallsDiffer(t *testing.T) {
+	for strat := range knownStrategies {
+		t.Run(string(strat), func(subT *testing.T) {
+			seen := make(map[GUID]struct{})
+			for i := 0; i < 500; i++ {
+				result, err := NewGUIDs(strat)
+				if err != nil {
+					subT.Error(err)
+				}
+				if _, present := seen[result]; present == true {
+					subT.Logf("The value %s was generated multiple times.", result.String())
+					subT.Fail()
+				}
+				seen[result] = struct{}{}
+			}
+		})
 	}
-}
 
-func Test_version1_SubsequentCallsDiffer(t *testing.T) {
-	seen := make(map[GUID]struct{})
-	for i := 0; i < 500; i++ {
-		result, _ := version1()
-		if _, present := seen[result]; present == true {
-			t.Logf("The value %s was generated multiple times.", result.String())
-			t.FailNow()
-		}
-		seen[result] = struct{}{}
-	}
 }
 
 func Test_getMACAddress(t *testing.T) {
@@ -171,35 +177,26 @@ func Test_getMACAddress(t *testing.T) {
 }
 
 func Test_setVersion_bounds(t *testing.T) {
-	var fodder GUID
-	err := fodder.setVersion(0)
-	if nil == err {
-		t.Log("error expected but unfound when version set to 0")
-		t.Fail()
-	}
-
-	err = fodder.setVersion(6)
-	if nil == err {
-		t.Log("error expected but unfound when version set to 6")
-		t.Fail()
-	}
-}
-
-func Benchmark_NewGUID(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		NewGUID()
+	testCases := []uint16{0, 6}
+	for _, tc := range testCases {
+		t.Run(fmt.Sprint(tc), func(t *testing.T) {
+			var fodder GUID
+			err := fodder.setVersion(tc)
+			if nil == err {
+				t.Log("error expected but unfound when version set to 0")
+				t.Fail()
+			}
+		})
 	}
 }
 
-func Benchmark_version1(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		version1()
-	}
-}
-
-func Benchmark_version4(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		version4()
+func Benchmark_NewGUIDs(b *testing.B) {
+	for strat := range knownStrategies {
+		b.Run(string(strat), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				NewGUIDs(strat)
+			}
+		})
 	}
 }
 
@@ -212,10 +209,15 @@ func Benchmark_String(b *testing.B) {
 }
 
 func Benchmark_Stringf(b *testing.B) {
-	rand, _ := NewGUIDs(CreationStrategyVersion4)
+	rand := NewGUID()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		rand.Stringf(FormatX)
+
+	for format := range knownFormats {
+		b.Run(string(format), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				rand.Stringf(format)
+			}
+		})
 	}
 }
 

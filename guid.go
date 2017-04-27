@@ -173,50 +173,47 @@ func getClockSequence() (uint16, error) {
 	return clockSeqVal, nil
 }
 
-func getMACAddress() ([6]byte, error) {
-	var retval [6]byte
-	var err error
+func getMACAddress() (mac [6]byte, err error) {
 	var hostNICs []net.Interface
 
 	hostNICs, err = net.Interfaces()
-	if nil == err {
-		found := false
-		for _, nic := range hostNICs {
-			var parity int
+	if err != nil {
+		return
+	}
 
-			parity, err = fmt.Sscanf(
-				strings.ToLower(nic.HardwareAddr.String()),
-				"%02x:%02x:%02x:%02x:%02x:%02x",
-				&retval[0],
-				&retval[1],
-				&retval[2],
-				&retval[3],
-				&retval[4],
-				&retval[5])
-			if parity == len(retval) {
-				found = true
-				break
-			}
-		}
-		if !found {
-			err = fmt.Errorf("No suitable address found")
+	for _, nic := range hostNICs {
+		var parity int
+
+		parity, err = fmt.Sscanf(
+			strings.ToLower(nic.HardwareAddr.String()),
+			"%02x:%02x:%02x:%02x:%02x:%02x",
+			&mac[0],
+			&mac[1],
+			&mac[2],
+			&mac[3],
+			&mac[4],
+			&mac[5])
+
+		if parity == len(mac) {
+			return
 		}
 	}
-	return retval, err
+
+	err = fmt.Errorf("No suitable address found")
+
+	return
 }
 
-func version1() (GUID, error) {
-	var retval GUID
+func version1() (result GUID, err error) {
 	var localMAC [6]byte
-	var err error
 	var clockSeq uint16
 
 	currentTime := getRFC4122Time()
 
-	retval.timeLow = uint32(currentTime)
-	retval.timeMid = uint16(currentTime >> 32)
-	retval.timeHighAndVersion = uint16(currentTime >> 48)
-	if err = retval.setVersion(1); err != nil {
+	result.timeLow = uint32(currentTime)
+	result.timeMid = uint16(currentTime >> 32)
+	result.timeHighAndVersion = uint16(currentTime >> 48)
+	if err = result.setVersion(1); err != nil {
 		return emptyGUID, err
 	}
 
@@ -226,18 +223,18 @@ func version1() (GUID, error) {
 		}
 		localMAC[0] |= 0x1
 	}
-	copy(retval.node[:], localMAC[:])
+	copy(result.node[:], localMAC[:])
 
 	if clockSeq, err = getClockSequence(); nil != err {
 		return emptyGUID, err
 	}
 
-	retval.clockSeqLow = uint8(clockSeq)
-	retval.clockSeqHighAndReserved = uint8(clockSeq >> 8)
+	result.clockSeqLow = uint8(clockSeq)
+	result.clockSeqHighAndReserved = uint8(clockSeq >> 8)
 
-	retval.setReservedBits()
+	result.setReservedBits()
 
-	return retval, nil
+	return
 }
 
 func version4() (GUID, error) {
