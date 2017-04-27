@@ -118,6 +118,34 @@ func Test_version4_ReservedBits(t *testing.T) {
 	}
 }
 
+func TestGUID_Stringf(t *testing.T) {
+	rand := NewGUID()
+
+	formats := []Format{Format("")}
+	for format := range knownFormats {
+		formats = append(formats, format)
+	}
+
+	for _, format := range formats {
+		t.Run(string(format), func(t *testing.T) {
+			result := rand.Stringf(format)
+			if result == "" {
+				t.Logf("could not create string for format, '%s'", string(format))
+				t.FailNow()
+			}
+
+			rehydrated, err := Parse(result)
+			if err != nil {
+				t.Error(err)
+			}
+			if rehydrated != rand {
+				t.Logf("'%s' isn't well formed", result)
+				t.Fail()
+			}
+		})
+	}
+}
+
 func Test_version4_NoOctetisReliablyZero(t *testing.T) {
 	results := make(map[string]uint)
 
