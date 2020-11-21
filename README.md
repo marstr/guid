@@ -21,7 +21,8 @@ This library will adhere to the
 
 The Release Notes portion of this file will be updated to reflect the most recent major/minor updates, with the option to tag particular bug-fixes as well. Updates to the Release Notes for patches should be addative, where as major/minor updates should replace the previous version. If one desires to see the release notes for an older version, checkout that version of code and open this file.
 
-# Release Notes 1.1.*
+# Release Notes 1.2.*
 
-## v1.1.0
-Adding support for JSON marshaling and unmarshaling.
+## v1.2.0
+
+- Adopting Go modules. 
