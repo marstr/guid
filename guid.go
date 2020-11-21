@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 	"sync"
@@ -98,29 +99,13 @@ func (guid GUID) MarshalJSON() (marshaled []byte, err error) {
 }
 
 // Parse instantiates a GUID from a text representation of the same GUID.
-// This is the inverse of function family String()
-func Parse(value string) (GUID, error) {
-	var guid GUID
-	for _, fullFormat := range knownFormats {
-		parity, err := fmt.Sscanf(
-			value,
-			fullFormat,
-			&guid.timeLow,
-			&guid.timeMid,
-			&guid.timeHighAndVersion,
-			&guid.clockSeqHighAndReserved,
-			&guid.clockSeqLow,
-			&guid.node[0],
-			&guid.node[1],
-			&guid.node[2],
-			&guid.node[3],
-			&guid.node[4],
-			&guid.node[5])
-		if parity == 11 && err == nil {
-			return guid, err
-		}
+// If applicable, avoid allocating a new GUID by calling UnmarshalText instead.
+func Parse(value string) (retval GUID, err error) {
+	err = retval.UnmarshalText([]byte(value))
+	if err != nil {
+		retval = emptyGUID
 	}
-	return emptyGUID, fmt.Errorf("\"%s\" is not in a recognized format", value)
+	return
 }
 
 // String returns a text representation of a GUID in the default format.
@@ -162,6 +147,36 @@ func (guid *GUID) UnmarshalJSON(marshaled []byte) (err error) {
 	stripped := marshaled[1 : len(marshaled)-1]
 	*guid, err = Parse(string(stripped))
 	return
+}
+
+// UnmarshalText populates a GUID from text.
+func (guid *GUID) UnmarshalText(marshaled []byte) (err error) {
+	reader := bytes.NewReader(marshaled)
+	for _, fullFormat := range knownFormats {
+		parity, err := fmt.Fscanf(
+			reader,
+			fullFormat,
+			&guid.timeLow,
+			&guid.timeMid,
+			&guid.timeHighAndVersion,
+			&guid.clockSeqHighAndReserved,
+			&guid.clockSeqLow,
+			&guid.node[0],
+			&guid.node[1],
+			&guid.node[2],
+			&guid.node[3],
+			&guid.node[4],
+			&guid.node[5])
+		if parity == 11 && err == nil {
+			return nil
+		}
+		_, err = reader.Seek(0, io.SeekStart)
+		if err != nil {
+			return err
+		}
+	}
+	*guid = emptyGUID
+	return fmt.Errorf("\"%s\" is not in a recognized format", string(marshaled))
 }
 
 // Version reads a GUID to parse which mechanism of generating GUIDS was employed.
