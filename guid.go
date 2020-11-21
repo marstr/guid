@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"strings"
 	"sync"
@@ -100,7 +101,8 @@ func (guid GUID) MarshalJSON() (marshaled []byte, err error) {
 // Parse instantiates a GUID from a text representation of the same GUID.
 // If applicable, avoid allocating a new GUID by calling UnmarshalText instead.
 func Parse(value string) (retval GUID, err error) {
-	if err := retval.UnmarshalText([]byte(value)); err != nil {
+	err = retval.UnmarshalText([]byte(value))
+	if err != nil {
 		retval = emptyGUID
 	}
 	return
@@ -167,6 +169,10 @@ func (guid *GUID) UnmarshalText(marshaled []byte) (err error) {
 			&guid.node[5])
 		if parity == 11 && err == nil {
 			return nil
+		}
+		_, err = reader.Seek(0, io.SeekStart)
+		if err != nil {
+			return err
 		}
 	}
 	*guid = emptyGUID
